@@ -374,6 +374,6 @@ pub trait LoopMaybeExpr {
 
 pub trait LazyBoolMaybeExpr<T, Ty: TrackingType> {
     type Bool;
-    fn and(self, other: impl Fn() -> T) -> Self::Bool;
-    fn or(self, other: impl Fn() -> T) -> Self::Bool;
+    fn and(self, other: impl FnOnce() -> T) -> Self::Bool;
+    fn or(self, other: impl FnOnce() -> T) -> Self::Bool;
 }
