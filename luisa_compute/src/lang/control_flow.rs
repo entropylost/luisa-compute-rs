@@ -310,7 +310,7 @@ pub fn for_unrolled<I: IntoIterator>(iter: I, mut body: impl FnMut(I::Item)) {
     }
 }
 
-pub fn for_range<R: ForLoopRange>(r: R, body: impl FnMut(Expr<R::Element>)) {
+pub fn for_range<R: ForLoopRange>(r: R, mut body: impl FnMut(Expr<R::Element>)) {
     let start = r.start().get();
     let end = r.end().get();
     let inc = |v: NodeRef| {
