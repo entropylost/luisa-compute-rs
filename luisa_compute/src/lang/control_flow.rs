@@ -95,8 +95,8 @@ pub fn return_() {
 
 pub fn if_then_else<R: Aggregate>(
     cond: Expr<bool>,
-    then: impl Fn() -> R,
-    else_: impl Fn() -> R,
+    then: impl FnOnce() -> R,
+    else_: impl FnOnce() -> R,
 ) -> R {
     let cond = cond.node().get();
     with_recorder(|r| {
@@ -199,11 +199,7 @@ pub fn select<A: Aggregate>(mask: Expr<bool>, a: A, b: A) -> A {
     A::from_vec_nodes(ret)
 }
 
-pub fn generic_loop(
-    mut cond: impl FnMut() -> Expr<bool>,
-    mut body: impl FnMut(),
-    mut update: impl FnMut(),
-) {
+pub fn generic_loop(cond: impl FnOnce() -> Expr<bool>, body: impl FnOnce(), update: impl FnOnce()) {
     with_recorder(|r| {
         let pools = r.pools.clone();
         let s = &mut r.scopes;
@@ -308,13 +304,13 @@ pub fn loop_(body: impl Fn()) {
     });
 }
 
-pub fn for_unrolled<I: IntoIterator>(iter: I, body: impl Fn(I::Item)) {
+pub fn for_unrolled<I: IntoIterator>(iter: I, mut body: impl FnMut(I::Item)) {
     for i in iter {
         body(i);
     }
 }
 
-pub fn for_range<R: ForLoopRange>(r: R, body: impl Fn(Expr<R::Element>)) {
+pub fn for_range<R: ForLoopRange>(r: R, body: impl FnMut(Expr<R::Element>)) {
     let start = r.start().get();
     let end = r.end().get();
     let inc = |v: NodeRef| {

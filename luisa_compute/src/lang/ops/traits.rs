@@ -353,12 +353,12 @@ pub trait StoreMaybeExpr<V> {
 }
 
 pub trait SelectMaybeExpr<R> {
-    fn if_then_else(self, on: impl Fn() -> R, off: impl Fn() -> R) -> R;
+    fn if_then_else(self, on: impl FnOnce() -> R, off: impl FnOnce() -> R) -> R;
     fn select(self, on: R, off: R) -> R;
 }
 
 pub trait ActivateMaybeExpr {
-    fn activate(self, then: impl Fn());
+    fn activate(self, then: impl FnOnce());
 }
 
 pub trait LoopMaybeExpr {
