@@ -402,7 +402,16 @@ impl<V: Value, E: AsExpr<Value = V>> StoreMaybeExpr<E> for Var<V> {
     }
 }
 
+pub struct NormalDelayedElse<R>(Option<R>);
+impl<R> DelayedElse<R> for NormalDelayedElse<R> {
+    fn finish_else(self, else_expr: impl FnOnce() -> R) -> R {
+        self.0.unwrap_or_else(else_expr)
+    }
+}
+
 impl<R> SelectMaybeExpr<R> for bool {
+    type DelayedElse = NormalDelayedElse<R>;
+    #[inline]
     fn if_then_else(self, on: impl FnOnce() -> R, off: impl FnOnce() -> R) -> R {
         if self {
             on()
@@ -410,6 +419,7 @@ impl<R> SelectMaybeExpr<R> for bool {
             off()
         }
     }
+    #[inline]
     fn select(self, on: R, off: R) -> R {
         if self {
             on
@@ -417,25 +427,105 @@ impl<R> SelectMaybeExpr<R> for bool {
             off
         }
     }
+    #[inline]
+    fn if_then_delayed(self, then: impl FnOnce() -> R) -> Self::DelayedElse {
+        NormalDelayedElse(if self { Some(then()) } else { None })
+    }
 }
+
+pub struct ExprDelayedElse<R: Aggregate> {
+    cond: NodeRef,
+    then: R,
+}
+impl<R: Aggregate> DelayedElse<R> for ExprDelayedElse<R> {
+    fn finish_else(self, else_: impl FnOnce() -> R) -> R {
+        let Self { cond, then } = self;
+        let then_nodes = then
+            .to_vec_nodes()
+            .into_iter()
+            .map(|x| x.get())
+            .collect::<Vec<_>>();
+        let then_block = with_recorder(|r| {
+            let pools = r.pools.clone();
+            let s = &mut r.scopes;
+            let then_block = s.pop().unwrap().finish();
+            s.push(IrBuilder::new(pools));
+            r.add_block_to_inaccessible(&then_block);
+            then_block
+        });
+        let else_ = else_();
+        let else_nodes = else_
+            .to_vec_nodes()
+            .into_iter()
+            .map(|x| x.get())
+            .collect::<Vec<_>>();
+        let else_block = with_recorder(|r| {
+            let s = &mut r.scopes;
+            let else_block = s.pop().unwrap().finish();
+            r.add_block_to_inaccessible(&else_block);
+            else_block
+        });
+        __current_scope(|b| {
+            b.if_(cond, then_block, else_block);
+        });
+        assert_eq!(then_nodes.len(), else_nodes.len());
+        let phis = then_nodes
+            .iter()
+            .zip(else_nodes.iter())
+            .map(|(then, else_)| {
+                let incomings = vec![
+                    PhiIncoming {
+                        value: *then,
+                        block: then_block,
+                    },
+                    PhiIncoming {
+                        value: *else_,
+                        block: else_block,
+                    },
+                ];
+                assert_eq!(then.type_(), else_.type_());
+                let phi = __current_scope(|b| b.phi(&incomings, then.type_().clone()));
+                phi.into()
+            })
+            .collect::<Vec<_>>();
+        R::from_vec_nodes(phis)
+    }
+}
+
 impl<R: Aggregate> SelectMaybeExpr<R> for Expr<bool> {
+    type DelayedElse = ExprDelayedElse<R>;
     fn if_then_else(self, on: impl FnOnce() -> R, off: impl FnOnce() -> R) -> R {
         crate::lang::control_flow::if_then_else(self, on, off)
     }
     fn select(self, on: R, off: R) -> R {
         crate::lang::control_flow::select(self, on, off)
     }
+    fn if_then_delayed(self, then: impl FnOnce() -> R) -> Self::DelayedElse {
+        let cond = self.node().get();
+        with_recorder(|r| {
+            let pools = r.pools.clone();
+            let s = &mut r.scopes;
+            s.push(IrBuilder::new(pools));
+        });
+        let then = then();
+        ExprDelayedElse { cond, then }
+    }
 }
 
 impl<R: Aggregate> SelectMaybeExpr<R> for Var<bool> {
+    type DelayedElse = ExprDelayedElse<R>;
     fn if_then_else(self, on: impl FnOnce() -> R, off: impl FnOnce() -> R) -> R {
         crate::lang::control_flow::if_then_else(**self, on, off)
     }
     fn select(self, on: R, off: R) -> R {
         crate::lang::control_flow::select(**self, on, off)
     }
+    fn if_then_delayed(self, then: impl FnOnce() -> R) -> Self::DelayedElse {
+        (**self).if_then_delayed(then)
+    }
 }
 impl ActivateMaybeExpr for bool {
+    #[inline]
     fn activate(self, then: impl FnOnce()) {
         if self {
             then()
@@ -455,6 +545,7 @@ impl ActivateMaybeExpr for Var<bool> {
 }
 
 impl LoopMaybeExpr for bool {
+    #[inline]
     fn while_loop(mut cond: impl FnMut() -> Self, mut body: impl FnMut()) {
         while cond() {
             body()
@@ -470,15 +561,18 @@ impl LoopMaybeExpr for Expr<bool> {
 
 impl LazyBoolMaybeExpr<bool, ValueType> for bool {
     type Bool = bool;
+    #[inline]
     fn and(self, other: impl FnOnce() -> bool) -> bool {
         self && other()
     }
+    #[inline]
     fn or(self, other: impl FnOnce() -> bool) -> bool {
         self || other()
     }
 }
 impl LazyBoolMaybeExpr<Expr<bool>, ExprType> for bool {
     type Bool = Expr<bool>;
+    #[inline]
     fn and(self, other: impl FnOnce() -> Expr<bool>) -> Self::Bool {
         if self {
             other()
@@ -486,6 +580,7 @@ impl LazyBoolMaybeExpr<Expr<bool>, ExprType> for bool {
             false.expr()
         }
     }
+    #[inline]
     fn or(self, other: impl FnOnce() -> Expr<bool>) -> Self::Bool {
         if self {
             true.expr()

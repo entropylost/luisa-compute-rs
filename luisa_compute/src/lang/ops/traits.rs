@@ -352,9 +352,16 @@ pub trait StoreMaybeExpr<V> {
     fn __store(self, value: V);
 }
 
+pub trait DelayedElse<R> {
+    fn finish_else(self, else_expr: impl FnOnce() -> R) -> R;
+}
+
 pub trait SelectMaybeExpr<R> {
+    type DelayedElse: DelayedElse<R>;
+
     fn if_then_else(self, on: impl FnOnce() -> R, off: impl FnOnce() -> R) -> R;
     fn select(self, on: R, off: R) -> R;
+    fn if_then_delayed(self, then: impl FnOnce() -> R) -> Self::DelayedElse;
 }
 
 pub trait ActivateMaybeExpr {

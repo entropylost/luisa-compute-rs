@@ -102,7 +102,11 @@ impl VisitMut for TraceVisitor {
                             file!(),
                             line!(),
                             column!(),
-                            || <_ as #trait_path::SelectMaybeExpr<_>>::if_then_else(#cond, || #then_branch, || #else_branch))
+                            || {
+                                let delayed_else = <_ as #trait_path::SelectMaybeExpr<_>>::if_then_delayed(#cond, || #then_branch);
+                                <_ as #trait_path::DelayedElse<_>>::finish_else(delayed_else, || #else_branch)
+                            }
+                        )
                     }
                 } else {
                     *node = parse_quote_spanned! {span=>
