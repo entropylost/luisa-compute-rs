@@ -162,12 +162,12 @@ impl Context {
     /// passing current_exe() is enough
     pub fn new(lib_path: impl AsRef<Path>) -> Self {
         // Thank you, llvm.
-        #[cfg(target_os = "linux")]
-        unsafe {
-            use std::ptr::null;
-            luisa_compute_sys::llvm_orc_deregisterEHFrameSectionWrapper(null(), 0);
-            luisa_compute_sys::llvm_orc_registerEHFrameSectionWrapper(null(), 0);
-        }
+        // #[cfg(target_os = "linux")]
+        // unsafe {
+        //     use std::ptr::null;
+        //     luisa_compute_sys::llvm_orc_deregisterEHFrameSectionWrapper(null(), 0);
+        //     luisa_compute_sys::llvm_orc_registerEHFrameSectionWrapper(null(), 0);
+        // }
         let mut lib_path = lib_path.as_ref().to_path_buf();
         lib_path = lib_path.canonicalize().unwrap();
         if lib_path.is_file() {
