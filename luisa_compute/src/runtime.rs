@@ -1822,6 +1822,22 @@ impl AsKernelArg for Accel {
     type Output = Accel;
 }
 
+macro_rules! impl_as_kernel_arg_for_tuple {
+    ()=>{
+        impl AsKernelArg for () {
+            type Output = ();
+        }
+    };
+    ($first:ident  $($Ts:ident) *) => {
+        impl<$first:AsKernelArg, $($Ts: AsKernelArg),*> AsKernelArg for ($first, $($Ts,)*) {
+            type Output = ($first::Output, $($Ts::Output),*);
+        }
+        impl_as_kernel_arg_for_tuple!($($Ts)*);
+    };
+
+}
+impl_as_kernel_arg_for_tuple!(T0 T1 T2 T3 T4 T5 T6 T7 T8 T9 T10 T11 T12 T13 T14 T15);
+
 macro_rules! impl_call_for_callable {
     ( $($Ts:ident)*) => {
         impl <R:CallableRet+'static, $($Ts: CallableParameter),*> Callable<fn($($Ts,)*)->R> {
