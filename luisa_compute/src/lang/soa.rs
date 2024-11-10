@@ -1,6 +1,6 @@
 use crate::internal_prelude::*;
 use crate::prelude::*;
-use crate::runtime::submit_default_stream_and_sync;
+use crate::runtime::submit_default_stream;
 use parking_lot::Mutex;
 use std::ops::RangeBounds;
 use std::sync::Arc;
@@ -129,7 +129,7 @@ impl<'a, T: SoaValue> SoaBufferView<'a, T> {
         )
     }
     pub fn copy_from_buffer(&self, buffer: &Buffer<T>) {
-        submit_default_stream_and_sync(&self.buffer.device, [self.copy_from_buffer_async(buffer)]);
+        submit_default_stream(&self.buffer.device, [self.copy_from_buffer_async(buffer)]);
     }
     pub fn copy_to_buffer_async(&self, buffer: &Buffer<T>) -> Command<'static, 'static> {
         self.init_copy_kernel();
@@ -144,7 +144,7 @@ impl<'a, T: SoaValue> SoaBufferView<'a, T> {
         )
     }
     pub fn copy_to_buffer(&self, buffer: &Buffer<T>) {
-        submit_default_stream_and_sync(&self.buffer.device, [self.copy_to_buffer_async(buffer)]);
+        submit_default_stream(&self.buffer.device, [self.copy_to_buffer_async(buffer)]);
     }
 }
 #[derive(Clone, Copy, Value, PartialEq, Eq, Hash, Debug)]

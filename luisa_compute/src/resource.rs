@@ -449,9 +449,7 @@ impl<T: Value> BufferView<T> {
         data
     }
     pub fn copy_to(&self, data: &mut [T]) {
-        unsafe {
-            submit_default_stream_and_sync(&self.device, [self.copy_to_async(data)]);
-        }
+        submit_default_stream_and_sync(&self.device, [self.copy_to_async(data)]);
     }
 
     pub fn copy_from_async<'a>(&self, data: &'a [T]) -> Command<'a, 'static> {
@@ -498,7 +496,7 @@ impl<T: Value> BufferView<T> {
         }
     }
     pub fn copy_to_buffer(&self, dst: &BufferView<T>) {
-        submit_default_stream_and_sync(&self.device, [self.copy_to_buffer_async(dst)]);
+        submit_default_stream(&self.device, [self.copy_to_buffer_async(dst)]);
     }
     pub fn view<S: RangeBounds<usize>>(&self, range: S) -> BufferView<T> {
         let lower = range.start_bound();
@@ -1282,10 +1280,7 @@ macro_rules! impl_tex_view {
                 }
             }
             pub fn copy_to_buffer<U: StorageTexel<T> + Value>(&self, buffer_view: &BufferView<U>) {
-                submit_default_stream_and_sync(
-                    &self.device,
-                    [self.copy_to_buffer_async(buffer_view)],
-                );
+                submit_default_stream(&self.device, [self.copy_to_buffer_async(buffer_view)]);
             }
             pub fn copy_from_buffer_async<U: StorageTexel<T> + Value>(
                 &self,
@@ -1314,10 +1309,7 @@ macro_rules! impl_tex_view {
                 &self,
                 buffer_view: &BufferView<U>,
             ) {
-                submit_default_stream_and_sync(
-                    &self.device,
-                    [self.copy_from_buffer_async(buffer_view)],
-                );
+                submit_default_stream(&self.device, [self.copy_from_buffer_async(buffer_view)]);
             }
             pub fn copy_to_texture_async(&self, other: &$name<T>) -> Command<'static, 'static> {
                 let mut rt = ResourceTracker::new();
@@ -1341,7 +1333,7 @@ macro_rules! impl_tex_view {
                 }
             }
             pub fn copy_to_texture(&self, other: &$name<T>) {
-                submit_default_stream_and_sync(&self.device, [self.copy_to_texture_async(other)]);
+                submit_default_stream(&self.device, [self.copy_to_texture_async(other)]);
             }
         }
     };

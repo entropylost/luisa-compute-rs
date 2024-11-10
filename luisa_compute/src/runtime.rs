@@ -1151,6 +1151,15 @@ struct CommandCallbackCtx<'cmd, 'scope, F: FnOnce() + Send + 'static> {
     f: F,
 }
 
+pub fn submit_default_stream<'cmd, I: IntoIterator<Item = Command<'cmd, 'static>>>(
+    device: &Device,
+    commands: I,
+) {
+    let s = device.default_stream().scope();
+    s.submit(commands);
+    s.detach();
+}
+
 pub fn submit_default_stream_and_sync<
     'cmd,
     'scope,
@@ -1531,7 +1540,11 @@ impl RawKernel {
         }
     }
     pub fn dispatch(self: &Arc<Self>, args: KernelArgEncoder, dispatch_size: [u32; 3]) {
-        submit_default_stream_and_sync(&self.device, vec![self.dispatch_async(args, dispatch_size)])
+        submit_default_stream(&self.device, [self.dispatch_async(args, dispatch_size)])
+    }
+
+    pub fn dispatch_blocking(self: &Arc<Self>, args: KernelArgEncoder, dispatch_size: [u32; 3]) {
+        submit_default_stream_and_sync(&self.device, [self.dispatch_async(args, dispatch_size)])
     }
 }
 
@@ -1879,6 +1892,13 @@ macro_rules! impl_dispatch_for_kernel {
                 let mut encoder = KernelArgEncoder::new();
                 $($Ts.encode(&mut encoder);)*
                 self.inner.dispatch(encoder, dispatch_size)
+            }
+            #[allow(non_snake_case)]
+            #[allow(unused_mut)]
+            pub fn dispatch_blocking(&self, dispatch_size: [u32; 3], $($Ts:&impl AsKernelArg<Output = $Ts>),*)  {
+                let mut encoder = KernelArgEncoder::new();
+                $($Ts.encode(&mut encoder);)*
+                self.inner.dispatch_blocking(encoder, dispatch_size)
             }
             #[allow(non_snake_case)]
             #[allow(unused_mut)]
