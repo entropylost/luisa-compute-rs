@@ -1,6 +1,56 @@
 use super::*;
 use crate::lang::index::IntoIndex;
-use std::ops::{Index, Neg};
+use std::ops::{Index, Neg, Mul, Add, Sub};
+
+impl<T: VectorAlign<N>, const N: usize> Mul<T> for Vector<T, N>
+where
+    T: Mul<T, Output = T>,
+{
+    type Output = Self;
+    fn mul(self, rhs: T) -> Self {
+        self.map(|x| x * rhs)
+    }
+}
+
+impl<T: VectorAlign<N>, const N: usize> Add<Vector<T, N>> for Vector<T, N> where T: Add<T, Output = T>
+{
+    type Output = Vector<T, N>;
+    fn add(mut self, rhs: Vector<T, N>) -> Self::Output {
+        for i in 0..N {
+            self.elements[i] = self.elements[i] + rhs.elements[i];
+        }
+        self
+    }
+}
+
+impl<T: VectorAlign<N>, const N: usize> Sub<Vector<T, N>> for Vector<T, N> where T: Sub<T, Output = T>
+{
+    type Output = Vector<T, N>;
+    fn sub(mut self, rhs: Vector<T, N>) -> Self::Output {
+        for i in 0..N {
+            self.elements[i] = self.elements[i] - rhs.elements[i];
+        }
+        self
+    }
+}
+
+impl<const N: usize> Mul<Vector<u32, N>> for u32 where u32: VectorAlign<N>
+{
+    type Output = Vector<u32, N>;
+    fn mul(self, rhs: Vector<u32, N>) -> Self::Output {
+        rhs.map(|x| self * x)
+    }
+}
+
+
+impl<const N: usize> Mul<Vector<f32, N>> for f32 where f32: VectorAlign<N>
+{
+    type Output = Vector<f32, N>;
+    fn mul(self, rhs: Vector<f32, N>) -> Self::Output {
+        rhs.map(|x| self * x)
+    }
+}
+
 
 impl<T: VectorAlign<N>, const N: usize> From<[T; N]> for Vector<T, N> {
     fn from(elements: [T; N]) -> Self {
