@@ -12,6 +12,18 @@ where
     }
 }
 
+
+impl<T: VectorAlign<N>, const N: usize> Div<T> for Vector<T, N>
+where
+    T: Div<T, Output = T>,
+{
+    type Output = Self;
+    fn mul(self, rhs: T) -> Self {
+        self.map(|x| x / rhs)
+    }
+}
+
+
 impl<T: VectorAlign<N>, const N: usize> Add<Vector<T, N>> for Vector<T, N>
 where
     T: Add<T, Output = T>,
@@ -55,26 +67,6 @@ where
     type Output = Vector<f32, N>;
     fn mul(self, rhs: Vector<f32, N>) -> Self::Output {
         rhs.map(|x| self * x)
-    }
-}
-
-impl<const N: usize> Div<Vector<u32, N>> for u32
-where
-    u32: VectorAlign<N>,
-{
-    type Output = Vector<u32, N>;
-    fn div(self, rhs: Vector<u32, N>) -> Self::Output {
-        rhs.map(|x| self / x)
-    }
-}
-
-impl<const N: usize> Div<Vector<f32, N>> for f32
-where
-    f32: VectorAlign<N>,
-{
-    type Output = Vector<f32, N>;
-    fn div(self, rhs: Vector<f32, N>) -> Self::Output {
-        rhs.map(|x| self / x)
     }
 }
 
