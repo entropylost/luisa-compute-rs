@@ -18,7 +18,7 @@ where
     T: Div<T, Output = T>,
 {
     type Output = Self;
-    fn mul(self, rhs: T) -> Self {
+    fn div(self, rhs: T) -> Self {
         self.map(|x| x / rhs)
     }
 }

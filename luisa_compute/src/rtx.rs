@@ -622,7 +622,7 @@ impl SurfaceCandidate {
     }
 }
 impl Deref for SurfaceCandidate {
-    type Target = SurfaceHitExpr;
+    type Target = Expr<SurfaceHit>;
     fn deref(&self) -> &Self::Target {
         &self.hit
     }
@@ -646,7 +646,7 @@ impl ProceduralCandidate {
     }
 }
 impl Deref for ProceduralCandidate {
-    type Target = ProceduralHitExpr;
+    type Target = Expr<ProceduralHit>;
     fn deref(&self) -> &Self::Target {
         &self.hit
     }
