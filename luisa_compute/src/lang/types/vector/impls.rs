@@ -100,9 +100,9 @@ impl<T: VectorAlign<N>, const N: usize> Vector<T, N> {
     pub fn splat_expr(element: impl AsExpr<Value = T>) -> Expr<Self> {
         Func::Vec.call(element.as_expr())
     }
-    pub fn map(&self, f: impl Fn(T) -> T) -> Self {
-        Self {
-            _align: T::A::default(),
+    pub fn map<S: VectorAlign<N>>(&self, f: impl Fn(T) -> S) -> Vector<S, N> {
+        Vector {
+            _align: S::A::default(),
             elements: self.elements.map(f),
         }
     }
