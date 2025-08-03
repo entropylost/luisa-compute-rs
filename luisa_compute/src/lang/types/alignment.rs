@@ -2,6 +2,7 @@ use std::hash::Hash;
 
 pub trait Alignment: Default + Copy + Hash + Eq + 'static {
     const ALIGNMENT: usize;
+    const DEFAULT: Self;
 }
 
 macro_rules! alignment {
@@ -10,6 +11,7 @@ macro_rules! alignment {
         #[repr(align($align))]
         pub struct $T;
         impl Alignment for $T {
+            const DEFAULT: Self = $T;
             const ALIGNMENT: usize = $align;
         }
     };

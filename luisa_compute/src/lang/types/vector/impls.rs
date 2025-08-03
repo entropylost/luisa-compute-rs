@@ -12,7 +12,6 @@ where
     }
 }
 
-
 impl<T: VectorAlign<N>, const N: usize> Div<T> for Vector<T, N>
 where
     T: Div<T, Output = T>,
@@ -22,7 +21,6 @@ where
         self.map(|x| x / rhs)
     }
 }
-
 
 impl<T: VectorAlign<N>, const N: usize> Add<Vector<T, N>> for Vector<T, N>
 where
@@ -73,7 +71,7 @@ where
 impl<T: VectorAlign<N>, const N: usize> From<[T; N]> for Vector<T, N> {
     fn from(elements: [T; N]) -> Self {
         Self {
-            _align: T::A::default(),
+            _align: T::A::DEFAULT,
             elements,
         }
     }
@@ -85,15 +83,15 @@ impl<T: VectorAlign<N>, const N: usize> From<Vector<T, N>> for [T; N] {
 }
 
 impl<T: VectorAlign<N>, const N: usize> Vector<T, N> {
-    pub fn from_elements(elements: [T; N]) -> Self {
+    pub const fn from_elements(elements: [T; N]) -> Self {
         Self {
-            _align: T::A::default(),
+            _align: T::A::DEFAULT,
             elements,
         }
     }
-    pub fn splat(element: T) -> Self {
+    pub const fn splat(element: T) -> Self {
         Self {
-            _align: T::A::default(),
+            _align: T::A::DEFAULT,
             elements: [element; N],
         }
     }
@@ -129,9 +127,9 @@ where
 macro_rules! impl_sized {
     ($Vn:ident($N: literal), $Vexpr:ident, $Vvar:ident : $($xs:ident),+) => {
         impl<T: VectorAlign<$N>> $Vn<T> {
-            pub fn new($($xs: T),+) -> Self {
+            pub const fn new($($xs: T),+) -> Self {
                 Self {
-                    _align: T::A::default(),
+                    _align: T::A::DEFAULT,
                     elements: [$($xs),+],
                 }
             }
