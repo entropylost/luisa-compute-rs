@@ -41,6 +41,14 @@ pub struct Vector<T: VectorAlign<N>, const N: usize> {
     _align: T::A,
     pub elements: [T; N],
 }
+impl<T: VectorAlign<N> + Default, const N: usize> Default for Vector<T, N> {
+    fn default() -> Self {
+        Self {
+            _align: T::A::default(),
+            elements: [T::default(); N],
+        }
+    }
+}
 
 #[repr(C)]
 #[derive(Copy, Clone)]
