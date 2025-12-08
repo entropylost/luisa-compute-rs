@@ -471,7 +471,7 @@ impl Compiler {
                     quote!(& #lt u32)
                 }
                 syn::GenericParam::Const(_) => {
-                    panic!("Const generic parameter is not supported")
+                    quote!(())
                 }
             })
             .collect::<Vec<_>>();

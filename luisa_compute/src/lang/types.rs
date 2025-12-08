@@ -1,5 +1,6 @@
 use std::cell::UnsafeCell;
 use std::ops::Deref;
+use std::fmt::Debug;
 
 use crate::internal_prelude::*;
 
@@ -175,6 +176,11 @@ pub struct Expr<T: Value> {
     _marker: PhantomData<T>,
     proxy: *mut ExprProxyData<T>,
 }
+impl<T: Value> Debug for Expr<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Expr<{}>(node: {:?})", std::any::type_name::<T>(), self.node)
+    }
+}
 
 #[derive(Copy, Clone)]
 #[repr(C)]
@@ -193,12 +199,22 @@ pub struct Var<T: Value> {
     _marker: PhantomData<T>,
     proxy: *mut VarProxyData<T>,
 }
+impl<T: Value> Debug for Var<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Var<{}>(node: {:?})", std::any::type_name::<T>(), self.node)
+    }
+}
 #[derive(Copy, Clone)]
 #[repr(C)]
 pub struct AtomicRef<T: Value> {
     pub(crate) node: SafeNodeRef,
     _marker: PhantomData<T>,
     proxy: *mut AtomciRefProxyDataProxyData<T>,
+}
+impl<T: Value> Debug for AtomicRef<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "AtomicRef<{}>(node: {:?})", std::any::type_name::<T>(), self.node)
+    }
 }
 
 impl<T: Value> ToNode for AtomicRef<T> {
