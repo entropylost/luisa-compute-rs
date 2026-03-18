@@ -57,12 +57,9 @@ impl VisitMut for TraceVisitor {
                     }
                 }
             }
-            Stmt::Item(Item::Const(c)) => match c.expr.as_ref() {
-                Expr::Lit(_) => {}
-                _ => {
-                    panic!("Please wrap CONST statments with `escape!`");
-                }
-            },
+            Stmt::Item(Item::Const(c)) => {
+                return;
+            }
             _ => {}
         }
         visit_stmt_mut(self, node);
