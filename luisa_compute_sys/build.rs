@@ -124,6 +124,8 @@ fn target_profile_dir(out_dir: &Path) -> PathBuf {
 
 fn copy_dlls(out_dir: &PathBuf) {
     let profile_dir = target_profile_dir(out_dir);
+    // Not created by cargo until an example is built.
+    fs::create_dir_all(profile_dir.join("examples")).unwrap();
     let mut out_dir = out_dir.clone();
     out_dir.push(&"build/bin");
 
@@ -153,10 +155,10 @@ fn copy_dlls(out_dir: &PathBuf) {
                     .join(path.file_name().unwrap());
                 copy_if_different(&path, dest);
             }
-            {
-                let dest = profile_dir
-                    .join("deps")
-                    .join(path.file_name().unwrap());
+            // Test binaries only live in `deps` under the old build-dir layout.
+            let deps_dir = profile_dir.join("deps");
+            if deps_dir.is_dir() {
+                let dest = deps_dir.join(path.file_name().unwrap());
                 dbg!(&dest);
                 copy_if_different(&path, dest);
             }
