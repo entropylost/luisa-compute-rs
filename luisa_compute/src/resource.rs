@@ -603,6 +603,7 @@ impl BindlessArray {
             op: api::BindlessArrayUpdateOperation::Emplace,
             handle: bufferview.handle(),
             offset: bufferview.offset,
+            size: usize::MAX,
         };
         let mut slots = self.slots.borrow_mut();
         slots[index].buffer = Some(bufferview._handle());
@@ -673,6 +674,7 @@ impl BindlessArray {
             op: api::BindlessArrayUpdateOperation::Remove,
             handle: api::Buffer(INVALID_RESOURCE_HANDLE),
             offset: 0,
+            size: usize::MAX,
         };
         let mut slots = self.slots.borrow_mut();
         slots[index].buffer = None;

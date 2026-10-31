@@ -771,6 +771,7 @@ impl Device {
             compile_only: false,
             name: name.as_ptr(),
             native_include: native_include.as_ptr(),
+            ..Default::default()
         };
         let module = k.inner.module.clone();
         let artifact = if options.async_compile {
