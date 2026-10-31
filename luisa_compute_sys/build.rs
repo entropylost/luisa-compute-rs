@@ -47,6 +47,7 @@ fn cmake_build() -> PathBuf {
     set_from_env!("REMOTE", "LUISA_COMPUTE_ENABLE_REMOTE");
     set_from_env!("CUDA", "LUISA_COMPUTE_ENABLE_CUDA");
     set_from_env!("METAL", "LUISA_COMPUTE_ENABLE_METAL");
+    set_from_env!("VULKAN", "LUISA_COMPUTE_ENABLE_VULKAN");
     set_from_env!("PYTHON", "LUISA_COMPUTE_ENABLE_PYTHON");
     set_from_env!("GUI", "LUISA_COMPUTE_ENABLE_GUI");
     set_from_env!("OIDN", "LUISA_COMPUTE_DOWNLOAD_OIDN");
@@ -110,7 +111,19 @@ fn need_copy(path: &PathBuf) -> bool {
     false
 }
 
+// The profile directory (e.g. `target/debug`) is the parent of the `build` directory
+// containing `OUT_DIR`. Works for both `build/<pkg>-<hash>/out` and `build/<pkg>/<hash>/out`.
+fn target_profile_dir(out_dir: &Path) -> PathBuf {
+    out_dir
+        .ancestors()
+        .find(|p| p.file_name().map_or(false, |n| n == "build"))
+        .and_then(|p| p.parent())
+        .expect("Failed to find target directory from OUT_DIR.")
+        .to_path_buf()
+}
+
 fn copy_dlls(out_dir: &PathBuf) {
+    let profile_dir = target_profile_dir(out_dir);
     let mut out_dir = out_dir.clone();
     out_dir.push(&"build/bin");
 
@@ -121,7 +134,6 @@ fn copy_dlls(out_dir: &PathBuf) {
         dbg!(&path);
         if need_copy(&path) {
             // let target_dir = get_output_path();
-            let comps: Vec<_> = path.components().collect();
             let copy_if_different = |src, dst| {
                 let p_src = Path::new(&src);
                 let p_dst = Path::new(&dst);
@@ -137,19 +149,19 @@ fn copy_dlls(out_dir: &PathBuf) {
                 }
             };
             {
-                let dest = std::path::PathBuf::from_iter(comps[..comps.len() - 6].iter())
+                let dest = profile_dir
                     .join(path.file_name().unwrap());
                 copy_if_different(&path, dest);
             }
             {
-                let dest = std::path::PathBuf::from_iter(comps[..comps.len() - 6].iter())
+                let dest = profile_dir
                     .join("deps")
                     .join(path.file_name().unwrap());
                 dbg!(&dest);
                 copy_if_different(&path, dest);
             }
             {
-                let dest = std::path::PathBuf::from_iter(comps[..comps.len() - 6].iter())
+                let dest = profile_dir
                     .join("examples")
                     .join(path.file_name().unwrap());
                 dbg!(&dest);
@@ -166,9 +178,7 @@ fn copy_dlls(out_dir: &PathBuf) {
                     );
                 }
             };
-            let comps: Vec<_> = path.components().collect();
-            let target_base_dir =
-                std::path::PathBuf::from_iter(comps[..comps.len() - 6].iter()).join("examples");
+            let target_base_dir = profile_dir.join("examples");
 
             let current_target_dir = target_base_dir.join(".data");
             create_dir(current_target_dir.as_path());

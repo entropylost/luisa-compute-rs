@@ -41,6 +41,7 @@ glam = { version = "0.24.0", optional = false }
 [features]
 default = ["remote", "cuda", "cpu", "metal", "dx"]
 metal = ["luisa_compute_sys/metal"]
+vulkan = ["luisa_compute_sys/vulkan"]
 cuda = ["luisa_compute_sys/cuda"]
 dx = ["luisa_compute_sys/dx"]
 strict = ["luisa_compute_sys/strict"]
